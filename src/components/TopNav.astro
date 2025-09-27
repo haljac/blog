@@ -16,6 +16,12 @@ const currentPath = Astro.url.pathname;
           Notes
         </a>
         <a 
+          href="/tags" 
+          class={`text-gray-600 hover:text-gray-900 transition-colors ${currentPath.startsWith('/tags') ? 'text-gray-900' : ''}`}
+        >
+          Tags
+        </a>
+        <a 
           href="/about" 
           class={`text-gray-600 hover:text-gray-900 transition-colors ${currentPath === '/about' ? 'text-gray-900' : ''}`}
         >

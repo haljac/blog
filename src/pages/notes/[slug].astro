@@ -1,6 +1,8 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import TopNav from '../../components/TopNav.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import SocialShare from '../../components/SocialShare.astro';
 import { getCollection } from 'astro:content';
 
 export async function getStaticPaths() {
@@ -13,6 +15,24 @@ export async function getStaticPaths() {
 
 const { note } = Astro.props;
 const { Content } = await note.render();
+
+// Get related posts based on shared tags
+const allNotes = await getCollection('notes');
+const relatedNotes = allNotes
+  .filter(n => n.slug !== note.slug) // Exclude current note
+  .map(n => ({
+    ...n,
+    sharedTags: n.data.tags?.filter(tag => note.data.tags?.includes(tag)) || []
+  }))
+  .filter(n => n.sharedTags.length > 0) // Only notes with shared tags
+  .sort((a, b) => {
+    // Sort by number of shared tags (descending), then by date (descending)
+    if (b.sharedTags.length !== a.sharedTags.length) {
+      return b.sharedTags.length - a.sharedTags.length;
+    }
+    return b.data.date.getTime() - a.data.date.getTime();
+  })
+  .slice(0, 3); // Limit to 3 related posts
 
 const formattedDate = note.data.date.toLocaleDateString('en-US', {
   year: 'numeric',
@@ -32,15 +52,11 @@ const formattedDate = note.data.date.toLocaleDateString('en-US', {
   <TopNav />
   <main class="max-w-4xl mx-auto px-6 py-8">
     <article class="max-w-3xl mx-auto">
-      <!-- Back navigation -->
-      <div class="mb-8">
-        <a 
-          href="/" 
-          class="text-gray-600 hover:text-gray-900 transition-colors text-sm"
-        >
-          ← Back to notes
-        </a>
-      </div>
+      <!-- Breadcrumbs -->
+      <Breadcrumbs paths={[
+        { name: "Notes", href: "/" },
+        { name: note.data.title, href: `/notes/${note.slug}/` }
+      ]} />
 
       <!-- Article header with metadata -->
       <header class="mb-12 pb-8 border-b border-gray-200">
@@ -75,9 +91,12 @@ const formattedDate = note.data.date.toLocaleDateString('en-US', {
         {note.data.tags && note.data.tags.length > 0 && (
           <div class="flex flex-wrap gap-2">
             {note.data.tags.map((tag) => (
-              <span class="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
+              <a 
+                href={`/tags/${tag}`}
+                class="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full hover:bg-blue-100 hover:text-blue-700 transition-colors"
+              >
                 {tag}
-              </span>
+              </a>
             ))}
           </div>
         )}
@@ -87,6 +106,57 @@ const formattedDate = note.data.date.toLocaleDateString('en-US', {
       <div class="prose prose-gray max-w-none prose-headings:font-light prose-headings:text-gray-900 prose-p:text-gray-700 prose-p:leading-relaxed prose-a:text-blue-600 prose-a:no-underline hover:prose-a:text-blue-800 prose-strong:text-gray-900 prose-blockquote:border-l-gray-300 prose-blockquote:text-gray-600 prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-mono prose-pre:bg-gray-50 prose-pre:border prose-pre:border-gray-200">
         <Content />
       </div>
+      
+      <!-- Social Sharing -->
+      <div class="mt-12 pt-6 border-t border-gray-200">
+        <SocialShare 
+          title={note.data.title}
+          url={`https://hallnotes.xyz/notes/${note.slug}/`}
+          description={note.data.excerpt}
+        />
+      </div>
+      
+      <!-- Related Posts -->
+      {relatedNotes.length > 0 && (
+        <section class="mt-16 pt-8 border-t border-gray-200">
+          <h2 class="text-xl font-medium text-gray-900 mb-6">Related Notes</h2>
+          <div class="space-y-4">
+            {relatedNotes.map((relatedNote) => {
+              const relatedDate = relatedNote.data.date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              });
+              
+              return (
+                <article class="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:bg-blue-50 transition-colors">
+                  <a href={`/notes/${relatedNote.slug}`} class="block">
+                    <div class="flex items-start justify-between mb-2">
+                      <h3 class="text-lg font-medium text-gray-900 hover:text-blue-700 transition-colors">
+                        {relatedNote.data.title}
+                      </h3>
+                      <time class="text-sm text-gray-500 ml-4 flex-shrink-0">{relatedDate}</time>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-3">{relatedNote.data.excerpt}</p>
+                    <div class="flex flex-wrap gap-2">
+                      {relatedNote.sharedTags.map((tag) => (
+                        <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">
+                          {tag}
+                        </span>
+                      ))}
+                      {relatedNote.data.tags?.filter(tag => !relatedNote.sharedTags.includes(tag)).slice(0, 2).map((tag) => (
+                        <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </a>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+      )}
     </article>
   </main>
 </Layout>

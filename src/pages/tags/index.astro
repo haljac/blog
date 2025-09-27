@@ -1,0 +1,102 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import TopNav from '../../components/TopNav.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import { getCollection } from 'astro:content';
+
+const notes = await getCollection('notes');
+
+// Get all tags with their count
+const tagCounts = notes.reduce((acc, note) => {
+  note.data.tags?.forEach(tag => {
+    acc[tag] = (acc[tag] || 0) + 1;
+  });
+  return acc;
+}, {} as Record<string, number>);
+
+// Sort tags by count (descending) then alphabetically
+const sortedTags = Object.entries(tagCounts)
+  .sort(([a, countA], [b, countB]) => {
+    if (countB !== countA) return countB - countA;
+    return a.localeCompare(b);
+  });
+---
+
+<Layout 
+  title="Tags - Hall's Notes"
+  description="Browse notes by topic. Find all articles organized by tags and categories."
+>
+  <TopNav />
+  <main class="max-w-4xl mx-auto px-6 py-8">
+    <!-- Breadcrumbs -->
+    <Breadcrumbs paths={[
+      { name: "Notes", href: "/" },
+      { name: "Tags", href: "/tags/" }
+    ]} />
+    
+    <div class="space-y-8">
+      <header class="mb-12">
+        <h1 class="text-3xl font-light text-gray-900 mb-2">Browse by Topic</h1>
+        <p class="text-gray-600">
+          Explore {sortedTags.length} topics across {notes.length} notes
+        </p>
+      </header>
+      
+      <div class="space-y-8">
+        <!-- Tag Cloud -->
+        <section>
+          <h2 class="text-xl font-medium text-gray-900 mb-4">Popular Tags</h2>
+          <div class="flex flex-wrap gap-3">
+            {sortedTags.map(([tag, count]) => {
+              const size = count === 1 ? 'text-sm' : count === 2 ? 'text-base' : 'text-lg';
+              const weight = count === 1 ? 'font-normal' : count === 2 ? 'font-medium' : 'font-semibold';
+              
+              return (
+                <a 
+                  href={`/tags/${tag}`}
+                  class={`${size} ${weight} px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-blue-100 hover:text-blue-700 transition-colors`}
+                >
+                  {tag} ({count})
+                </a>
+              );
+            })}
+          </div>
+        </section>
+        
+        <!-- Tag List -->
+        <section>
+          <h2 class="text-xl font-medium text-gray-900 mb-4">All Tags</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {sortedTags.map(([tag, count]) => (
+              <a 
+                href={`/tags/${tag}`}
+                class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors group"
+              >
+                <div>
+                  <h3 class="font-medium text-gray-900 group-hover:text-blue-700 capitalize">
+                    {tag}
+                  </h3>
+                  <p class="text-sm text-gray-500">
+                    {count} {count === 1 ? 'note' : 'notes'}
+                  </p>
+                </div>
+                <svg class="w-5 h-5 text-gray-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+              </a>
+            ))}
+          </div>
+        </section>
+      </div>
+      
+      <div class="mt-12 pt-6 border-t border-gray-200">
+        <a 
+          href="/" 
+          class="text-blue-600 hover:text-blue-800 transition-colors"
+        >
+          ← View all notes
+        </a>
+      </div>
+    </div>
+  </main>
+</Layout>

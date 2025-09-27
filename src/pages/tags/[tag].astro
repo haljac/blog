@@ -1,0 +1,104 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import TopNav from '../../components/TopNav.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const notes = await getCollection('notes');
+  
+  // Get all unique tags
+  const tags = [...new Set(notes.flatMap(note => note.data.tags || []))];
+  
+  return tags.map(tag => ({
+    params: { tag },
+    props: { 
+      tag,
+      notes: notes.filter(note => note.data.tags?.includes(tag))
+    }
+  }));
+}
+
+const { tag, notes } = Astro.props;
+const sortedNotes = notes.sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+const tagCapitalized = tag.charAt(0).toUpperCase() + tag.slice(1);
+---
+
+<Layout 
+  title={`${tagCapitalized} - Hall's Notes`}
+  description={`Notes tagged with ${tag}. A collection of thoughts and observations on ${tag}.`}
+>
+  <TopNav />
+  <main class="max-w-4xl mx-auto px-6 py-8">
+    <!-- Breadcrumbs -->
+    <Breadcrumbs paths={[
+      { name: "Notes", href: "/" },
+      { name: `Tag: ${tagCapitalized}`, href: `/tags/${tag}/` }
+    ]} />
+    
+    <div class="space-y-8">
+      <header class="mb-12">
+        <h1 class="text-3xl font-light text-gray-900 mb-2">
+          Notes tagged with "{tagCapitalized}"
+        </h1>
+        <p class="text-gray-600">
+          {sortedNotes.length} {sortedNotes.length === 1 ? 'note' : 'notes'} found
+        </p>
+      </header>
+      
+      <div class="space-y-6">
+        {sortedNotes.map((note) => {
+          const formattedDate = note.data.date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          });
+          
+          return (
+            <article>
+              <a 
+                href={`/notes/${note.slug}`}
+                class="block group cursor-pointer"
+              >
+                <div class="border-b border-gray-100 pb-6 group-hover:border-gray-200 transition-colors">
+                  <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-lg font-medium text-gray-900 group-hover:text-gray-600 transition-colors">
+                      {note.data.title}
+                    </h2>
+                    <time class="text-sm text-gray-500">{formattedDate}</time>
+                  </div>
+                  <p class="text-gray-600 leading-relaxed mb-3">{note.data.excerpt}</p>
+                  {note.data.tags && note.data.tags.length > 0 && (
+                    <div class="flex flex-wrap gap-2">
+                      {note.data.tags.map((noteTag) => (
+                        <a 
+                          href={`/tags/${noteTag}`}
+                          class={`px-2 py-1 text-xs rounded transition-colors ${
+                            noteTag === tag 
+                              ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' 
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
+                        >
+                          {noteTag}
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </a>
+            </article>
+          );
+        })}
+      </div>
+      
+      <div class="mt-12 pt-6 border-t border-gray-200">
+        <a 
+          href="/" 
+          class="text-blue-600 hover:text-blue-800 transition-colors"
+        >
+          ← View all notes
+        </a>
+      </div>
+    </div>
+  </main>
+</Layout>
