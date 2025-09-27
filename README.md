@@ -1,5 +1,7 @@
 # Hall's Notes - Astro Blog
 
+[![Netlify Status](https://api.netlify.com/api/v1/badges/7a67600a-1853-4aa8-aac7-64d2f3656c69/deploy-status)](https://app.netlify.com/projects/hallnotes/deploys)
+
 A minimalist blog built with Astro, featuring markdown content with frontmatter support.
 
 ## Features
