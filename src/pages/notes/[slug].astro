@@ -1,0 +1,135 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import TopNav from '../../components/TopNav.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const notes = await getCollection('notes');
+  return notes.map((note) => ({
+    params: { slug: note.slug },
+    props: { note },
+  }));
+}
+
+const { note } = Astro.props;
+const { Content } = await note.render();
+
+const formattedDate = note.data.date.toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric'
+});
+---
+
+<Layout title={note.data.title} description={note.data.excerpt}>
+  <TopNav />
+  <main class="max-w-4xl mx-auto px-6 py-8">
+    <article class="max-w-3xl mx-auto">
+      <!-- Back navigation -->
+      <div class="mb-8">
+        <a 
+          href="/" 
+          class="text-gray-600 hover:text-gray-900 transition-colors text-sm"
+        >
+          ← Back to notes
+        </a>
+      </div>
+
+      <!-- Article header with metadata -->
+      <header class="mb-12 pb-8 border-b border-gray-200">
+        <h1 class="text-3xl font-light text-gray-900 mb-4">
+          {note.data.title}
+        </h1>
+        
+        <div class="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-4">
+          <time datetime={note.data.date.toISOString()}>
+            {formattedDate}
+          </time>
+          {note.data.author && (
+            <>
+              <span>•</span>
+              <span>{note.data.author}</span>
+            </>
+          )}
+          {note.data.readTime && (
+            <>
+              <span>•</span>
+              <span>{note.data.readTime}</span>
+            </>
+          )}
+        </div>
+
+        {note.data.excerpt && (
+          <p class="text-lg text-gray-600 leading-relaxed mb-6">
+            {note.data.excerpt}
+          </p>
+        )}
+
+        {note.data.tags && note.data.tags.length > 0 && (
+          <div class="flex flex-wrap gap-2">
+            {note.data.tags.map((tag) => (
+              <span class="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+      </header>
+
+      <!-- Article content -->
+      <div class="prose prose-gray max-w-none prose-headings:font-light prose-headings:text-gray-900 prose-p:text-gray-700 prose-p:leading-relaxed prose-a:text-blue-600 prose-a:no-underline hover:prose-a:text-blue-800 prose-strong:text-gray-900 prose-blockquote:border-l-gray-300 prose-blockquote:text-gray-600 prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-mono prose-pre:bg-gray-50 prose-pre:border prose-pre:border-gray-200">
+        <Content />
+      </div>
+    </article>
+  </main>
+</Layout>
+
+<style>
+  .prose {
+    @apply text-gray-700;
+  }
+  
+  .prose h1 {
+    @apply text-2xl font-light text-gray-900 mb-6 mt-8;
+  }
+  
+  .prose h2 {
+    @apply text-xl font-medium text-gray-900 mb-4 mt-8;
+  }
+  
+  .prose h3 {
+    @apply text-lg font-medium text-gray-900 mb-3 mt-6;
+  }
+  
+  .prose p {
+    @apply leading-relaxed mb-4;
+  }
+  
+  .prose ul {
+    @apply list-disc list-inside mb-4 space-y-1;
+  }
+  
+  .prose ol {
+    @apply list-decimal list-inside mb-4 space-y-1;
+  }
+  
+  .prose li {
+    @apply leading-relaxed;
+  }
+  
+  .prose blockquote {
+    @apply border-l-4 border-gray-300 pl-4 italic my-6;
+  }
+  
+  .prose hr {
+    @apply border-gray-300 my-8;
+  }
+  
+  .prose a {
+    @apply underline transition-colors;
+  }
+  
+  .prose a[href^="http"] {
+    @apply after:content-['_↗'] after:text-xs after:text-gray-400;
+  }
+</style>
