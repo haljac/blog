@@ -2,19 +2,101 @@
 export interface Props {
   title: string;
   description?: string;
+  image?: string;
+  article?: boolean;
+  publishDate?: Date;
+  author?: string;
+  tags?: string[];
+  canonical?: string;
 }
 
-const { title, description = "A collection of thoughts and observations" } = Astro.props;
+const { 
+  title, 
+  description = "A collection of thoughts and observations",
+  image = "/vite.svg",
+  article = false,
+  publishDate,
+  author = "Hall",
+  tags = [],
+  canonical 
+} = Astro.props;
+
+const siteUrl = Astro.site?.toString() || "https://hallnotes.xyz";
+const canonicalUrl = canonical || Astro.url.toString();
+const imageUrl = image.startsWith('http') ? image : `${siteUrl}${image}`;
 ---
 
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="description" content={description} />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    
+    <!-- Primary Meta Tags -->
     <title>{title}</title>
+    <meta name="title" content={title} />
+    <meta name="description" content={description} />
+    <meta name="author" content={author} />
+    {tags.length > 0 && <meta name="keywords" content={tags.join(", ")} />}
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href={canonicalUrl} />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content={article ? "article" : "website"} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={imageUrl} />
+    <meta property="og:site_name" content="Hall's Notes" />
+    {article && publishDate && <meta property="article:published_time" content={publishDate.toISOString()} />}
+    {article && author && <meta property="article:author" content={author} />}
+    {article && tags.map(tag => <meta property="article:tag" content={tag} />)}
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content={canonicalUrl} />
+    <meta property="twitter:title" content={title} />
+    <meta property="twitter:description" content={description} />
+    <meta property="twitter:image" content={imageUrl} />
+    
+    <!-- Favicons -->
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    
+    <!-- RSS Feed -->
+    <link rel="alternate" type="application/rss+xml" title="Hall's Notes RSS Feed" href="/rss.xml" />
+    
+    <!-- Sitemap -->
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    
+    {article && (
+      <script type="application/ld+json" set:html={JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": title,
+        "description": description,
+        "image": imageUrl,
+        "author": {
+          "@type": "Person",
+          "name": author
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "Hall's Notes",
+          "logo": {
+            "@type": "ImageObject",
+            "url": `${siteUrl}/vite.svg`
+          }
+        },
+        "datePublished": publishDate?.toISOString(),
+        "dateModified": publishDate?.toISOString(),
+        "mainEntityOfPage": {
+          "@type": "WebPage",
+          "@id": canonicalUrl
+        },
+        "keywords": tags.join(", ")
+      })} />
+    )}
   </head>
   <body class="min-h-screen bg-white">
     <slot />

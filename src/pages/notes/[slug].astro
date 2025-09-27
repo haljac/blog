@@ -21,7 +21,14 @@ const formattedDate = note.data.date.toLocaleDateString('en-US', {
 });
 ---
 
-<Layout title={note.data.title} description={note.data.excerpt}>
+<Layout 
+  title={note.data.title} 
+  description={note.data.excerpt}
+  article={true}
+  publishDate={note.data.date}
+  author={note.data.author}
+  tags={note.data.tags}
+>
   <TopNav />
   <main class="max-w-4xl mx-auto px-6 py-8">
     <article class="max-w-3xl mx-auto">

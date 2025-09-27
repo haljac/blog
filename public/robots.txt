@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Block access to any draft content
+Disallow: /draft/
+Disallow: /*draft*
+
+# Sitemap
+Sitemap: https://hallnotes.xyz/sitemap-index.xml

@@ -8,7 +8,10 @@ const notes = await getCollection('notes');
 const sortedNotes = notes.sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
 ---
 
-<Layout title="Hall's Notes">
+<Layout 
+  title="Hall's Notes" 
+  description="A collection of thoughts and observations on technology, productivity, and life"
+>
   <TopNav />
   <main class="max-w-4xl mx-auto px-6 py-8">
     <div class="space-y-8">
